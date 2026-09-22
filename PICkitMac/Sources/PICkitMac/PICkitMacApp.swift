@@ -14,17 +14,17 @@ struct PICkitMacApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandMenu("Programmer") {
-                Button("Detectează dispozitivul") { model.request(.detect) }
+                Button("Detect Device") { model.request(.detect) }
                     .keyboardShortcut("d", modifiers: [.command])
                 Divider()
-                Button("Citește…") { model.request(.read) }
+                Button("Read…") { model.request(.read) }
                     .keyboardShortcut("r", modifiers: [.command])
-                Button("Scrie firmware-ul") { model.request(.write) }
+                Button("Write Firmware") { model.request(.write) }
                     .keyboardShortcut("w", modifiers: [.command])
-                Button("Verifică") { model.request(.verify) }
+                Button("Verify") { model.request(.verify) }
                     .keyboardShortcut("v", modifiers: [.command])
-                Button("Șterge memoria") { model.request(.erase) }
-                Button("Verifică memoria goală") { model.request(.blankCheck) }
+                Button("Erase Memory") { model.request(.erase) }
+                Button("Blank Check") { model.request(.blankCheck) }
             }
         }
     }

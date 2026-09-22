@@ -17,9 +17,9 @@ struct ContentView: View {
                     Divider()
                     TabView(selection: $model.selectedTab) {
                         MemoryView().tabItem { Label("Firmware", systemImage: "memorychip") }.tag(0)
-                        ConfigurationView().tabItem { Label("Configurare", systemImage: "switch.2") }.tag(1)
-                        AdvancedView().tabItem { Label("Mod expert", systemImage: "slider.horizontal.3") }.tag(2)
-                        ConsoleView().tabItem { Label("Jurnal operații", systemImage: "terminal") }.tag(3)
+                        ConfigurationView().tabItem { Label("Settings", systemImage: "switch.2") }.tag(1)
+                        AdvancedView().tabItem { Label("Expert Mode", systemImage: "slider.horizontal.3") }.tag(2)
+                        ConsoleView().tabItem { Label("Activity Log", systemImage: "terminal") }.tag(3)
                     }
                     .padding(.horizontal, 12)
                 }
@@ -35,19 +35,19 @@ struct ContentView: View {
             titleVisibility: .visible
         ) {
             if model.pendingConfirmation == .write {
-                Button("Scrie firmware-ul", role: .destructive) { model.confirmPendingOperation() }
+                Button("Write Firmware", role: .destructive) { model.confirmPendingOperation() }
             } else if model.pendingConfirmation == .erase {
-                Button("Șterge definitiv memoria", role: .destructive) { model.confirmPendingOperation() }
+                Button("Permanently Erase Memory", role: .destructive) { model.confirmPendingOperation() }
             }
-            Button("Anulează", role: .cancel) { model.pendingConfirmation = nil }
+            Button("Cancel", role: .cancel) { model.pendingConfirmation = nil }
         } message: {
             Text(confirmationMessage)
         }
-        .alert("Nu putem continua", isPresented: Binding(
+        .alert("Unable to Continue", isPresented: Binding(
             get: { model.alertMessage != nil },
             set: { if !$0 { model.alertMessage = nil } }
         )) {
-            Button("Am înțeles") { model.alertMessage = nil }
+            Button("OK") { model.alertMessage = nil }
         } message: { Text(model.alertMessage ?? "") }
     }
 
@@ -58,8 +58,7 @@ struct ContentView: View {
                 Image(systemName: "memorychip.fill").foregroundStyle(.white)
             }.frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 1) {
-                Text("PICkit Mac Programmer").font(.headline)
-                Text("Programare și verificare firmware").font(.caption).foregroundStyle(.secondary)
+                Text("PICkit Programmer MacOS").font(.headline)
             }
             Spacer()
             Circle().fill(model.isRunning ? .orange : model.exitCode == 0 ? .green : .secondary).frame(width: 8, height: 8)
@@ -71,33 +70,33 @@ struct ContentView: View {
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FieldLabel("Pregătire")
-            ReadinessRow(number: 1, title: "Motor de programare", detail: model.isEngineReady ? "pk2cmd este disponibil" : "Necesită configurare", complete: model.isEngineReady)
-            if !model.isEngineReady { Button("Selectează pk2cmd…") { model.chooseExecutable() }.controlSize(.small) }
+            FieldLabel("Setup")
+            ReadinessRow(number: 1, title: "Programming Engine", detail: model.isEngineReady ? "pk2cmd is available" : "Configuration required", complete: model.isEngineReady)
+            if !model.isEngineReady { Button("Select pk2cmd…") { model.chooseExecutable() }.controlSize(.small) }
             Divider()
-            ReadinessRow(number: 2, title: "Microcontroler", detail: model.selectedTarget, complete: model.options.partSelection != .none && (model.options.partSelection != .explicit || !model.options.partName.isEmpty))
-            FieldLabel("Metodă de selectare")
+            ReadinessRow(number: 2, title: "Target Device", detail: model.selectedTarget, complete: model.options.partSelection != .none && (model.options.partSelection != .explicit || !model.options.partName.isEmpty))
+            FieldLabel("Selection Method")
             Picker("", selection: $model.options.partSelection) {
-                Text("Introdu modelul exact").tag(PartSelection.explicit)
-                Text("Detectare automată").tag(PartSelection.autoAll)
-                Text("Detectare într-o familie").tag(PartSelection.autoFamily)
+                Text("Enter exact part number").tag(PartSelection.explicit)
+                Text("Automatic detection").tag(PartSelection.autoAll)
+                Text("Detect within a family").tag(PartSelection.autoFamily)
             }.labelsHidden()
             if model.options.partSelection == .explicit {
-                TextField("Exemplu: PIC16F887", text: $model.options.partName)
+                TextField("Example: PIC16F887", text: $model.options.partName)
             } else if model.options.partSelection == .autoFamily {
-                TextField("ID-ul familiei", text: $model.options.familyID)
+                TextField("Family ID", text: $model.options.familyID)
             }
             Button { model.request(.detect) } label: {
-                Label("Detectează acum", systemImage: "scope").frame(maxWidth: .infinity)
+                Label("Detect Now", systemImage: "scope").frame(maxWidth: .infinity)
             }.buttonStyle(.borderedProminent).disabled(model.isRunning)
             Divider()
-            ReadinessRow(number: 3, title: "Fișier firmware", detail: model.hasFirmware ? URL(fileURLWithPath: model.options.hexFilePath).lastPathComponent : "Niciun fișier selectat", complete: model.hasFirmware)
-            Button(model.hasFirmware ? "Schimbă fișierul…" : "Selectează firmware…") { model.chooseHexFile() }
+            ReadinessRow(number: 3, title: "Firmware File", detail: model.hasFirmware ? URL(fileURLWithPath: model.options.hexFilePath).lastPathComponent : "No file selected", complete: model.hasFirmware)
+            Button(model.hasFirmware ? "Change File…" : "Select Firmware…") { model.chooseHexFile() }
                 .frame(maxWidth: .infinity)
             Spacer()
-            Button { model.selectedTab = 1 } label: { Label("Configurare", systemImage: "gearshape") }
+            Button { model.selectedTab = 1 } label: { Label("Settings", systemImage: "gearshape") }
                 .buttonStyle(.plain).foregroundStyle(.secondary)
-            Button { model.showHelp() } label: { Label("Ajutor pk2cmd", systemImage: "questionmark.circle") }
+            Button { model.showHelp() } label: { Label("pk2cmd Help", systemImage: "questionmark.circle") }
                 .buttonStyle(.plain).foregroundStyle(.secondary)
         }
         .padding(16).frame(width: 252)
@@ -110,16 +109,16 @@ struct ContentView: View {
                     .font(.title3.weight(.semibold))
                 HStack(spacing: 18) {
                     Label("PICkit 2 / 3 / PKOB", systemImage: "externaldrive.connected.to.line.below")
-                    Label(model.options.externalPower ? "Alimentare externă" : "Alimentare din programator", systemImage: "bolt")
+                    Label(model.options.externalPower ? "External target power" : "Powered by programmer", systemImage: "bolt")
                 }.font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 5) {
-                Text("TENSIUNE ȚINTĂ (VDD)").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                Text("TARGET VOLTAGE (VDD)").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
                 HStack(spacing: 5) {
                     TextField("5.0", text: $model.options.vdd).frame(width: 48).multilineTextAlignment(.trailing)
                     Text("V")
-                    Toggle("Valoare manuală", isOn: $model.options.overrideVDD).labelsHidden().help("Activează pentru a înlocui tensiunea recomandată de baza de dispozitive.")
+                    Toggle("Manual value", isOn: $model.options.overrideVDD).labelsHidden().help("Enable this to override the voltage recommended by the device database.")
                 }
             }
         }.padding(16)
@@ -140,26 +139,26 @@ struct ContentView: View {
 
     private var quickActions: some View {
         HStack(spacing: 8) {
-            ActionButton("Citește", "arrow.down.doc", .read, help: "Citește memoria dispozitivului și salvează rezultatul într-un fișier HEX.")
-            ActionButton("Scrie firmware", "arrow.up.doc", .write, prominent: true, help: "Scrie fișierul HEX selectat și verifică automat rezultatul.")
-            ActionButton("Verifică", "checkmark.shield", .verify, help: "Compară dispozitivul cu fișierul HEX fără să modifice memoria.")
-            ActionButton("Șterge", "eraser", .erase, help: "Șterge memoria dispozitivului după confirmare.")
-            ActionButton("Memorie goală?", "doc.badge.magnifyingglass", .blankCheck, help: "Verifică dacă memoria dispozitivului este complet goală.")
+            ActionButton("Read", "arrow.down.doc", .read, help: "Read device memory and save it to a HEX file.")
+            ActionButton("Write Firmware", "arrow.up.doc", .write, prominent: true, help: "Write the selected HEX file and automatically verify the result.")
+            ActionButton("Verify", "checkmark.shield", .verify, help: "Compare the device with the selected HEX file without changing its memory.")
+            ActionButton("Erase", "eraser", .erase, help: "Erase device memory after confirmation.")
+            ActionButton("Blank Check", "doc.badge.magnifyingglass", .blankCheck, help: "Check whether the device memory is completely blank.")
             Spacer()
-            if model.isRunning { Button("Oprește operația", role: .destructive) { model.stop() } }
+            if model.isRunning { Button("Stop Operation", role: .destructive) { model.stop() } }
         }.padding(12)
     }
 
     private var confirmationTitle: String {
-        model.pendingConfirmation == .erase ? "Ștergi memoria dispozitivului?" : "Scrii firmware-ul pe dispozitiv?"
+        model.pendingConfirmation == .erase ? "Erase the device memory?" : "Write firmware to the device?"
     }
 
     private var confirmationMessage: String {
         if model.pendingConfirmation == .erase {
-            return "Conținutul existent din \(model.selectedTarget) va fi șters definitiv."
+            return "The existing contents of \(model.selectedTarget) will be permanently erased."
         }
         let file = URL(fileURLWithPath: model.options.hexFilePath).lastPathComponent
-        return "Fișierul „\(file)” va fi scris pe \(model.selectedTarget), apoi verificat. Nu deconecta programatorul în timpul operației."
+        return "The file “\(file)” will be written to \(model.selectedTarget) and then verified. Do not disconnect the programmer during this operation."
     }
 }
 

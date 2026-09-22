@@ -290,7 +290,9 @@ void Ccmd_app::processArgvForSpaces(int argc, _TCHAR* argv[])
 	for (i=0, j=0; i < argc; i++, j++)
 	{
 		nargv[j] = (char *) malloc(MAX_PATH);
-		strcpy(nargv[j], argv[i]);
+		// argv[0] may be an absolute POSIX path (for example /Users/...).
+		// Do not let option scanners interpret its leading slash as a switch.
+		strcpy(nargv[j], i == 0 ? "pk2cmd" : argv[i]);
 		nargc++;
 
 		if (checkSwitch(argv[i]))

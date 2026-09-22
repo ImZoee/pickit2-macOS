@@ -1,18 +1,18 @@
 import Foundation
 
 enum PartSelection: String, CaseIterable, Identifiable {
-    case explicit = "Model exact"
-    case autoAll = "Detectare automată"
-    case autoFamily = "Detectare după familie"
-    case none = "Fără selecție"
+    case explicit = "Exact part"
+    case autoAll = "Automatic detection"
+    case autoFamily = "Family detection"
+    case none = "No selection"
     var id: String { rawValue }
 }
 
 enum UnitSelection: String, CaseIterable, Identifiable {
-    case first = "Primul conectat"
-    case unitID = "După ID"
-    case list = "Listează programatoarele"
-    case listFirmware = "Listează și versiunile"
+    case first = "First connected"
+    case unitID = "By unit ID"
+    case list = "List programmers"
+    case listFirmware = "List with firmware versions"
     var id: String { rawValue }
 }
 
@@ -31,12 +31,12 @@ struct MemoryRegions {
 }
 
 enum ReadMode: String, CaseIterable, Identifiable {
-    case hexFile = "Fișier HEX"
-    case rawFile = "Fișier binar"
-    case program = "Memorie program"
+    case hexFile = "HEX file"
+    case rawFile = "Binary file"
+    case program = "Program memory"
     case eeprom = "EEPROM"
-    case ids = "Memorie ID"
-    case configuration = "Configurare"
+    case ids = "ID memory"
+    case configuration = "Configuration"
     var id: String { rawValue }
 
     var code: String {
@@ -60,8 +60,8 @@ struct CommandOptions {
     var overrideVDD = false
     var deviceFilePath = ""
     var hexFilePath = ""
-    var partSelection: PartSelection = .explicit
-    var partName = "PIC16F887"
+    var partSelection: PartSelection = .autoAll
+    var partName = ""
     var familyID = ""
     var unitSelection: UnitSelection = .first
     var unitID = ""

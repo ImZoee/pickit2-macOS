@@ -7,12 +7,12 @@ enum QuickOperation: String, Identifiable {
 
     var title: String {
         switch self {
-        case .detect: return "Detectează dispozitivul"
-        case .read: return "Citește memoria"
-        case .write: return "Scrie firmware-ul"
-        case .verify: return "Verifică firmware-ul"
-        case .erase: return "Șterge memoria"
-        case .blankCheck: return "Verifică dacă memoria este goală"
+        case .detect: return "Detect Device"
+        case .read: return "Read Memory"
+        case .write: return "Write Firmware"
+        case .verify: return "Verify Firmware"
+        case .erase: return "Erase Memory"
+        case .blankCheck: return "Blank Check"
         }
     }
 }
@@ -21,8 +21,8 @@ enum QuickOperation: String, Identifiable {
 final class ProgrammerModel: ObservableObject {
     @Published var options = CommandOptions()
     @Published var executablePath = ""
-    @Published var console = "Aplicația este pregătită. Conectează programatorul și detectează dispozitivul țintă.\n"
-    @Published var status = "Programator nedetectat"
+    @Published var console = "The application is ready. Connect the programmer and detect the target device.\n"
+    @Published var status = "Programmer not detected"
     @Published var isRunning = false
     @Published var exitCode: Int32?
     @Published var memoryPreview: [String] = []
@@ -63,10 +63,10 @@ final class ProgrammerModel: ObservableObject {
 
     var selectedTarget: String {
         switch options.partSelection {
-        case .explicit: return options.partName.isEmpty ? "Neselectat" : options.partName.uppercased()
-        case .autoAll: return "Detectare automată"
-        case .autoFamily: return options.familyID.isEmpty ? "Familie nespecificată" : "Familia \(options.familyID)"
-        case .none: return "Neselectat"
+        case .explicit: return options.partName.isEmpty ? "Not selected" : options.partName.uppercased()
+        case .autoAll: return "Automatic detection"
+        case .autoFamily: return options.familyID.isEmpty ? "Family not specified" : "Family \(options.familyID)"
+        case .none: return "Not selected"
         }
     }
 
@@ -91,20 +91,23 @@ final class ProgrammerModel: ObservableObject {
 
     func validationProblem(for operation: QuickOperation) -> String? {
         guard isEngineReady else {
-            return "Motorul pk2cmd nu este disponibil. Selectează executabilul din Configurare."
+            return "The pk2cmd engine is unavailable. Select the executable in Settings."
         }
         if operation == .write || operation == .verify {
-            guard hasFirmware else { return "Selectează mai întâi un fișier firmware Intel HEX valid." }
+            guard hasFirmware else { return "Select a valid Intel HEX firmware file first." }
+        }
+        if options.partSelection == .autoFamily && options.familyID.trimmingCharacters(in: .whitespaces).isEmpty {
+            return "Enter a family ID or select automatic detection across all families."
         }
         if operation != .detect && options.partSelection == .explicit && options.partName.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Introdu modelul exact al microcontrolerului sau activează detectarea automată."
+            return "Enter the exact microcontroller part number or enable automatic detection."
         }
         return nil
     }
 
     func chooseExecutable() {
         let panel = NSOpenPanel()
-        panel.title = "Selectează executabilul pk2cmd"
+        panel.title = "Select the pk2cmd Executable"
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK { executablePath = panel.url?.path ?? "" }
@@ -112,7 +115,7 @@ final class ProgrammerModel: ObservableObject {
 
     func chooseHexFile() {
         let panel = NSOpenPanel()
-        panel.title = "Selectează firmware-ul Intel HEX"
+        panel.title = "Select Intel HEX Firmware"
         panel.allowedContentTypes = [.init(filenameExtension: "hex")].compactMap { $0 }
         if panel.runModal() == .OK, let path = panel.url?.path {
             options.hexFilePath = path
@@ -122,7 +125,7 @@ final class ProgrammerModel: ObservableObject {
 
     func chooseDeviceFile() {
         let panel = NSOpenPanel()
-        panel.title = "Selectează PK2DeviceFile.dat"
+        panel.title = "Select PK2DeviceFile.dat"
         if panel.runModal() == .OK, let url = panel.url {
             options.deviceFilePath = url.deletingLastPathComponent().path(percentEncoded: false)
         }
@@ -130,7 +133,7 @@ final class ProgrammerModel: ObservableObject {
 
     func chooseFirmware() {
         let panel = NSOpenPanel()
-        panel.title = "Selectează firmware-ul programatorului"
+        panel.title = "Select Programmer Firmware"
         if panel.runModal() == .OK { options.firmwarePath = panel.url?.path ?? "" }
     }
 
@@ -139,19 +142,19 @@ final class ProgrammerModel: ObservableObject {
         var args = baseArguments()
         switch operation {
         case .detect:
-            args += ["-P", "-I"]
+            args += partArgument()
         case .read:
             let panel = NSSavePanel()
-            panel.title = "Salvează conținutul dispozitivului"
+            panel.title = "Save Device Contents"
             panel.nameFieldStringValue = "device-read.hex"
             guard panel.runModal() == .OK, let path = panel.url?.path else { return }
-            args += partArgument() + ["-GF\(path)", "-I", "-K"]
+            args += partArgument() + ["-GF\(path)"]
         case .write:
             guard requireHexFile() else { return }
-            args += partArgument() + ["-F\(options.hexFilePath)", "-M", "-I", "-K"]
+            args += partArgument() + ["-F\(options.hexFilePath)", "-M"]
         case .verify:
             guard requireHexFile() else { return }
-            args += partArgument() + ["-F\(options.hexFilePath)", "-Y", "-I", "-K"]
+            args += partArgument() + ["-F\(options.hexFilePath)", "-Y"]
         case .erase:
             args += partArgument() + ["-E"]
         case .blankCheck:
@@ -173,7 +176,7 @@ final class ProgrammerModel: ObservableObject {
 
     func stop() {
         process?.terminate()
-        console += "\nOperation cancelled by user.\n"
+        console += "\nOperation cancelled by the user.\n"
     }
 
     private func baseArguments() -> [String] {
@@ -191,7 +194,7 @@ final class ProgrammerModel: ObservableObject {
 
     private func requireHexFile() -> Bool {
         guard !options.hexFilePath.isEmpty else {
-            status = "Selectează mai întâi firmware-ul"
+            status = "Select firmware first"
             chooseHexFile()
             return !options.hexFilePath.isEmpty
         }
@@ -200,14 +203,14 @@ final class ProgrammerModel: ObservableObject {
 
     private func run(arguments: [String]) {
         guard !executablePath.isEmpty else {
-            status = "Motorul pk2cmd nu este configurat"
-            console += "\nSelectează executabilul pk2cmd din Configurare.\n"
+            status = "The pk2cmd engine is not configured"
+            console += "\nSelect the pk2cmd executable in Settings.\n"
             selectedTab = 3
             return
         }
         guard FileManager.default.isExecutableFile(atPath: executablePath) else {
-            status = "Executabil pk2cmd invalid"
-            console += "\nFișierul selectat nu poate fi executat: \(executablePath)\n"
+            status = "Invalid pk2cmd executable"
+            console += "\nThe selected file is not executable: \(executablePath)\n"
             selectedTab = 3
             return
         }
@@ -221,7 +224,7 @@ final class ProgrammerModel: ObservableObject {
         task.currentDirectoryURL = URL(fileURLWithPath: executablePath).deletingLastPathComponent()
 
         console = "$ " + ([executablePath] + arguments).map(\.shellQuoted).joined(separator: " ") + "\n\n"
-        status = "Operație în curs…"
+        status = "Operation in progress…"
         isRunning = true
         exitCode = nil
         process = task
@@ -236,7 +239,16 @@ final class ProgrammerModel: ObservableObject {
                 pipe.fileHandleForReading.readabilityHandler = nil
                 self?.isRunning = false
                 self?.exitCode = process.terminationStatus
-                self?.status = process.terminationStatus == 0 ? "Operație finalizată cu succes" : "Operație eșuată (cod \(process.terminationStatus))"
+                switch process.terminationStatus {
+                case 0:
+                    self?.status = "Operation completed successfully"
+                case 36:
+                    self?.status = "Invalid command (code 36) — see the activity log"
+                    self?.selectedTab = 3
+                default:
+                    self?.status = "Operation failed (code \(process.terminationStatus))"
+                    self?.selectedTab = 3
+                }
                 self?.process = nil
             }
         }
@@ -245,14 +257,14 @@ final class ProgrammerModel: ObservableObject {
         catch {
             pipe.fileHandleForReading.readabilityHandler = nil
             isRunning = false
-            status = "Motorul pk2cmd nu a putut fi pornit"
-            console += "Eroare la pornire: \(error.localizedDescription)\n"
+            status = "The pk2cmd engine could not be started"
+            console += "Launch error: \(error.localizedDescription)\n"
         }
     }
 
     private func loadPreview(path: String) {
         guard let text = try? String(contentsOfFile: path, encoding: .utf8) else {
-            memoryPreview = ["Fișierul selectat nu a putut fi citit."]
+            memoryPreview = ["The selected file could not be read."]
             return
         }
         memoryPreview = IntelHexPreview.make(from: text)
@@ -264,9 +276,9 @@ final class ProgrammerModel: ObservableObject {
             $0.appendingPathComponent("pk2cmd").path(percentEncoded: false)
         }
         let candidates: [String] = ([
+            bundled,
             fm.currentDirectoryPath + "/pk2cmd/pk2cmd",
             fm.currentDirectoryPath + "/../pk2cmd/pk2cmd",
-            bundled,
             "/usr/local/bin/pk2cmd", "/opt/homebrew/bin/pk2cmd"
         ] as [String?]).compactMap { $0 }
         return candidates.first(where: fm.isExecutableFile(atPath:))
@@ -293,7 +305,7 @@ enum IntelHexPreview {
             } else if type == 4, let upper = hex(8, 4) { base = upper << 16 }
         }
         guard let minimum = bytes.keys.min(), let maximum = bytes.keys.max() else {
-            return ["Fișierul nu conține înregistrări Intel HEX valide."]
+            return ["The file does not contain valid Intel HEX records."]
         }
         let first = minimum & ~0x0F
         let last = min(maximum, first + 0x3FF)
